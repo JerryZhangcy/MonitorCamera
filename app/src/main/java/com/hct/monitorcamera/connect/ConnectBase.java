@@ -35,7 +35,6 @@ public abstract class ConnectBase {
     protected ReceiveRunnable mReceiveRunnable;
     protected ConnectRunnable mConnectRunnable;
     private String mTagMessage = "";
-    private byte[] mPictureData;
 
     public synchronized void connect(InetSocketAddress serverAddress) {
         if (mIsStarting) {
