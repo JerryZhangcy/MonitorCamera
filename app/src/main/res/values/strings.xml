@@ -5,4 +5,6 @@
     <string name="wifi_connect_success">Wifi连接成功</string>
     <string name="permission_miss">权限缺失，会导致应用无法正常使用,请赋予权限</string>
     <string name="device_connect_success">设备连接成功</string>
+    <string name="calibration_time_success">时间校准成功</string>
+    <string name="calibration_time_fail">时间校准失败</string>
 </resources>

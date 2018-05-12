@@ -36,6 +36,10 @@ public class TransferProtocol {
 
     public static final String UNKNOW = "unknow";
 
+    public static final String ERROR = "-1";
+
+    public static final int TRANSFER_SIZE = 1024;
+
     public static String getMessageHead(String message) {
         if (message.contains(DELIMITER)) {
             String head = message.substring(0, message.indexOf(DELIMITER));

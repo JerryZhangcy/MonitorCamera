@@ -46,16 +46,10 @@ public class FileListAdapter extends BaseAdapter {
         return convertView;
     }
 
-    public void updateAdapter(String value, boolean remove) {
-        if (remove) {
-            if (mList.contains(value)) {
-                mList.remove(value);
-            }
-        } else {
-            if (!mList.contains(value)) {
-                mList.add(value);
-            }
+    public void updateAdapter(ArrayList<String> list) {
+        if (list != null && list.size() > 0) {
+            mList = list;
+            notifyDataSetChanged();
         }
-        notifyDataSetChanged();
     }
 }

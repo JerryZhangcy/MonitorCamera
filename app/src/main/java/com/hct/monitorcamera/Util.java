@@ -49,7 +49,7 @@ public class Util {
 
     public static byte[] toBytes(String str) {
         if (str == null || str.trim().equals("")) {
-            return new byte[0];
+            return null;
         }
 
         byte[] bytes = new byte[str.length() / 2];

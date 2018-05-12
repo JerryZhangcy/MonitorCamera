@@ -39,8 +39,10 @@ import java.util.ArrayList;
 public class MainActivity extends Activity implements View.OnClickListener, OnSocketConnectListener {
 
     private static final int UPDATE_DEVICE_STATE = 0x1000;
-    private static final int UPDATE_RECV_MSG = 0x1001;
+    private static final int UPDATE_RECV_FILElIST_MSG = 0x1001;
     private static final int UPDATE_WIFI_STATE = 0X1002;
+    private static final int UPDATE_RECV_TIME_MSG = 0x1003;
+    private static final int UPDATE_RECV_PICTURER_MSG = 0x1004;
 
     private Button mConnectWifi, mConnectDevice, mDisConnectDevice, mSend;
     private EditText mSsid, mPws, mIp, mPort, mSendMsg;
@@ -76,8 +78,8 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
                         mDisConnectDevice.setEnabled(false);
                     }
                     break;
-                case UPDATE_RECV_MSG:
-                    mFileListAdapter.updateAdapter(String.valueOf(msg.obj), false);
+                case UPDATE_RECV_FILElIST_MSG:
+                    mFileListAdapter.updateAdapter(FileUtil.getInstance().getPictureNameList());
                     break;
                 case UPDATE_WIFI_STATE:
                     boolean flag = (boolean) msg.obj;
@@ -98,6 +100,14 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
                         mConnectDevice.setEnabled(false);
                         mDisConnectDevice.setEnabled(false);
                     }
+                    break;
+                case UPDATE_RECV_TIME_MSG:
+                    String value = (String) msg.obj;
+                    int id = R.string.calibration_time_success;
+                    if (TransferProtocol.ERROR.equals(value)) {
+                        id = R.string.calibration_time_fail;
+                    }
+                    Util.toast(id);
                     break;
             }
         }
@@ -253,12 +263,28 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
     }
 
     @Override
-    public void onHandlerMessage(String msg) {
+    public void onHandlerMessage(SendMessage msg) {
         Util.d("--------onHandlerMessage  msg = " + msg);
-        Message message = new Message();
-        message.obj = msg;
-        message.what = UPDATE_RECV_MSG;
-        mHander.sendMessage(message);
+        String tag = msg.getTag();
+        if (TransferProtocol.FILE_LIST.equals(tag)) {
+            String[] listValue = msg.message.split(TransferProtocol.DELIMITER_DIV);
+            for(String item:listValue) {
+                FileUtil.getInstance().addPictureNameList(item);
+            }
+            mHander.obtainMessage(UPDATE_RECV_FILElIST_MSG).sendToTarget();
+        } else if (TransferProtocol.TIME.equals(tag)) {
+            Message message = new Message();
+            message.obj = msg.message;
+            message.what = UPDATE_RECV_TIME_MSG;
+            mHander.sendMessage(message);
+        } else if (TransferProtocol.PICTURE.equals(tag)) {
+            if (TransferProtocol.ERROR.equals(msg.message)) {
+                return;
+            }
+            FileUtil.mCurrentPictureNum++;
+            byte[] data = Util.toBytes(msg.message);
+            FileUtil.getInstance().savePicture(data, "20180512.jpg");
+        }
     }
 
     private void registerWifiConnectChangeReceiver() {

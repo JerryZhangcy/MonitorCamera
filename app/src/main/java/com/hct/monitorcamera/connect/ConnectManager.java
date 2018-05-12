@@ -35,7 +35,7 @@ public class ConnectManager {
                     Util.d("ConnectManager-----onReceiveMessage------->message = "
                             + message.toString());
                     if (mOnSocketConnectListener != null) {
-                        mOnSocketConnectListener.onHandlerMessage(message.message);
+                        mOnSocketConnectListener.onHandlerMessage(message);
                     }
                 }
             }

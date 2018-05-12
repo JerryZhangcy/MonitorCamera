@@ -1,6 +1,8 @@
 package com.hct.monitorcamera.callback;
 
 
+import com.hct.monitorcamera.connect.SendMessage;
+
 public interface OnSocketConnectListener {
     void onConnectSuccess();
 
@@ -8,5 +10,5 @@ public interface OnSocketConnectListener {
 
     void channelInactive();
 
-    void onHandlerMessage(String msg);
+    void onHandlerMessage(SendMessage msg);
 }

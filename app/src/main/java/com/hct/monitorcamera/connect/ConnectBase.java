@@ -35,6 +35,7 @@ public abstract class ConnectBase {
     protected ReceiveRunnable mReceiveRunnable;
     protected ConnectRunnable mConnectRunnable;
     private String mTagMessage = "";
+    private String mTag = TransferProtocol.UNKNOW;
 
     public synchronized void connect(InetSocketAddress serverAddress) {
         if (mIsStarting) {
@@ -225,8 +226,7 @@ public abstract class ConnectBase {
     }
 
     private void receiveData() throws Exception {
-        String content = "";
-        ByteBuffer buf = ByteBuffer.allocate(1024);
+        ByteBuffer buf = ByteBuffer.allocate(TransferProtocol.TRANSFER_SIZE);
         int bytesRead = mSocketChannel.read(buf);
         Util.d("ConnectBase--------->bytesRead = " + bytesRead);
         if (bytesRead == 0) {
@@ -280,7 +280,7 @@ public abstract class ConnectBase {
     }
 
     private void dispatchMessage(ByteBuffer buf, int bytesRead) {
-        String tag = TransferProtocol.UNKNOW;
+        boolean isEnd = false;
         String content = "";
         content += new String(buf.array());
         buf.clear();
@@ -288,38 +288,50 @@ public abstract class ConnectBase {
             return;
         }
         content = content.substring(0, bytesRead);
+        content = content.replaceAll("\\s*", "");
+        int contentLenght = content.length();
         Util.d("dispatchMessage--------->content = " + content);
-        if (content.contains(TransferProtocol.DELIMITER)) {
-            String[] items = content.split(TransferProtocol.DELIMITER_DIV);
-            String head = items[0];
-            String value = items[1];
-            Util.d("dispatchMessage--------->head = " + head + " value = " + value);
-            if (TransferProtocol.FILE_LIST.equals(head)) {
-                tag = TransferProtocol.FILE_LIST;
-                if (items.length == 2 || items.length == 3) {//2表示消息不包含结束字符 3表示消息包含结束符
-                    mTagMessage += items[1];
-                }
-            } else if (TransferProtocol.TIME.equals(head)) {
-                tag = TransferProtocol.TIME;
-                if (items.length == 2 || items.length == 3) {//2表示消息不包含结束字符 3表示消息包含结束符
-                    mTagMessage += items[1];
-                }
-            } else if (TransferProtocol.PICTURE.equals(head)) {
-                tag = TransferProtocol.PICTURE;
-                if (items.length == 2 || items.length == 3) {//2表示消息不包含结束字符 3表示消息包含结束符
-                    mTagMessage += items[1];
-                }
+        if (TransferProtocol.FILE_LIST.contains(content)) {
+            mTag = TransferProtocol.FILE_LIST;
+            int tagLength = mTag.length();
+            if (contentLenght > tagLength) {
+                content = content.substring(0, contentLenght - tagLength);
+            } else {
+                content = "";
             }
+        } else if (TransferProtocol.TIME.contains(content)) {
+            mTag = TransferProtocol.TIME;
+            int tagLength = mTag.length();
+            if (contentLenght > tagLength) {
+                content = content.substring(0, contentLenght - tagLength);
+            } else {
+                content = "";
+            }
+        } else if (TransferProtocol.PICTURE.contains(content)) {
+            mTag = TransferProtocol.PICTURE;
+            int tagLength = mTag.length();
+            if (contentLenght > tagLength) {
+                content = content.substring(0, contentLenght - tagLength);
+            } else {
+                content = "";
+            }
+        }
 
-            if (items.length == 3) {
-                SendMessage msg = new SendMessage(mTagMessage, tag);
-                if (!msg.isValid()) {
-                    return;
-                }
-                Util.d("dispatchMessage--------->msg = " + msg.toString() + " tag = " + tag);
-                onReceiveMessage(msg);
-                mTagMessage = "";
+        mTagMessage += content;
+
+        if (mTagMessage.contains(TransferProtocol.END)) {
+            mTagMessage = mTagMessage.substring(0, mTagMessage.length() - TransferProtocol.END.length());
+            isEnd = true;
+        }
+
+        if (isEnd) {
+            SendMessage msg = new SendMessage(mTagMessage, mTag);
+            if (!msg.isValid()) {
+                return;
             }
+            Util.d("dispatchMessage--------->msg = " + msg.toString() + " tag = " + mTag);
+            onReceiveMessage(msg);
+            mTagMessage = "";
         }
     }
 }

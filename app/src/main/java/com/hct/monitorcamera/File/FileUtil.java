@@ -11,18 +11,36 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class FileUtil {
     public static final String MONITOR_CAMERA_ROOT_DIR = "MonitorCamera";
     public static final String INTERNAL_PATH = Environment.getExternalStorageDirectory().getPath();
     public static final long LEFT_SIZE = 1073741824L;//1GB
     private static FileUtil mInstance;
+    public static int mCurrentPictureNum = 0;
+    private ArrayList<String> mPictureNameList = new ArrayList<>();
 
     public synchronized static FileUtil getInstance() {
         if (mInstance == null) {
             mInstance = new FileUtil();
         }
         return mInstance;
+    }
+
+    public void addPictureNameList(String pictureName) {
+        mPictureNameList.add(pictureName);
+    }
+
+    public String getPictureNameAtPostion(int position) {
+        if (mPictureNameList.size() > 0) {
+            return mPictureNameList.get(position);
+        }
+        return null;
+    }
+
+    public ArrayList<String> getPictureNameList() {
+        return mPictureNameList;
     }
 
     public boolean isWritable() {
@@ -75,7 +93,7 @@ public class FileUtil {
     }
 
     public void savePicture(byte[] data, String pictureName) {
-        if (TextUtils.isEmpty(pictureName)) {
+        if (TextUtils.isEmpty(pictureName) || data == null) {
             return;
         }
         File root = new File(INTERNAL_PATH + File.separator + MONITOR_CAMERA_ROOT_DIR);
@@ -84,16 +102,15 @@ public class FileUtil {
         String mImageFilePath = new File(INTERNAL_PATH + File.separator + MONITOR_CAMERA_ROOT_DIR,
                 pictureName).getAbsolutePath();
         FileOutputStream out = null;
-
         try {
             out = new FileOutputStream(mImageFilePath);
             Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
+            bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
             out.flush();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if(out != null) {
+            if (out != null) {
                 try {
                     out.close();
                 } catch (IOException e) {
