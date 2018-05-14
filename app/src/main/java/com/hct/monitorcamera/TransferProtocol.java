@@ -4,7 +4,7 @@ package com.hct.monitorcamera;
  * 获取文件列表
  * "filelist"
  * 返回
- * 成功 "filelist|xxxx图片的名字xxxx|end" 异常 "filelist|-1|end"
+ * 成功 "filelist图片的名字|图片名字|end" 异常 "filelist|-1|end"
  * <p>
  * 校准时间
  * "time|20180509180000|end"

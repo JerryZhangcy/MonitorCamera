@@ -295,7 +295,7 @@ public abstract class ConnectBase {
             mTag = TransferProtocol.FILE_LIST;
             int tagLength = mTag.length();
             if (contentLenght > tagLength) {
-                content = content.substring(0, contentLenght - tagLength);
+                content = content.substring(tagLength, contentLenght - tagLength);
             } else {
                 content = "";
             }
@@ -303,7 +303,7 @@ public abstract class ConnectBase {
             mTag = TransferProtocol.TIME;
             int tagLength = mTag.length();
             if (contentLenght > tagLength) {
-                content = content.substring(0, contentLenght - tagLength);
+                content = content.substring(tagLength, contentLenght - tagLength);
             } else {
                 content = "";
             }
@@ -311,7 +311,7 @@ public abstract class ConnectBase {
             mTag = TransferProtocol.PICTURE;
             int tagLength = mTag.length();
             if (contentLenght > tagLength) {
-                content = content.substring(0, contentLenght - tagLength);
+                content = content.substring(tagLength, contentLenght - tagLength);
             } else {
                 content = "";
             }

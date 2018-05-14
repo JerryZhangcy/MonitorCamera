@@ -230,6 +230,7 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
                 ConnectManager.getInstance().disconnect();
                 break;
             case R.id.send:
+
                 String value = mSendMsg.getText().toString();
                 if (!TextUtils.isEmpty(value)) {
                     if (ConnectManager.getInstance().getConnectState()
@@ -263,7 +264,7 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
     }
 
     @Override
-    public void onHandlerMessage(SendMessage msg) {
+    public void onHandlerMessage(final SendMessage msg) {
         Util.d("--------onHandlerMessage  msg = " + msg);
         String tag = msg.getTag();
         if (TransferProtocol.FILE_LIST.equals(tag)) {
@@ -281,9 +282,16 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
             if (TransferProtocol.ERROR.equals(msg.message)) {
                 return;
             }
+            WorkThreadManager.executeOnSubThread(new Runnable() {
+                @Override
+                public void run() {
+                    byte[] data = Util.toBytes(msg.message);
+                    String fileName = FileUtil.getInstance().
+                            getPictureNameAtPostion(FileUtil.mCurrentPictureNum);
+                    FileUtil.getInstance().savePicture(data, fileName);
+                }
+            });
             FileUtil.mCurrentPictureNum++;
-            byte[] data = Util.toBytes(msg.message);
-            FileUtil.getInstance().savePicture(data, "20180512.jpg");
         }
     }
 
