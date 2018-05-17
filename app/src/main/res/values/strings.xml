@@ -1,8 +1,11 @@
 <resources>
     <string name="app_name">Monitor Camera</string>
     <string name="open_wifi_toast">请打开wifi</string>
+    <string name="Wifi_Connecting">正在连接</string>
     <string name="connect_wifi">连接wifi</string>
     <string name="wifi_connect_success">Wifi连接成功</string>
+    <string name="Wifi_OBTAINING_IPADDR">正在获取IP地址</string>
+    <string name="Wifi_AUTHENTICATING">正在验证密码</string>
     <string name="permission_miss">权限缺失，会导致应用无法正常使用,请赋予权限</string>
     <string name="device_connect_success">设备连接成功</string>
     <string name="calibration_time_success">时间校准成功</string>

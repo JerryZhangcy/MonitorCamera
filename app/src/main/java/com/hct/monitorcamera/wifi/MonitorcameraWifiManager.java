@@ -44,9 +44,12 @@ public class MonitorcameraWifiManager {
     public String getConnectedWifiSsid() {
         if (mWifiManager != null) {
             WifiInfo info = mWifiManager.getConnectionInfo();
-            String ssid = info.getSSID();
-            ssid = ssid.substring(1, ssid.length() - 1);//剔除掉前后的引号
-            return ssid;
+            Util.e("-------->info = " + info.toString());
+            if (info.getNetworkId() != -1) {
+                String ssid = info.getSSID();
+                ssid = ssid.substring(1, ssid.length() - 1);//剔除掉前后的引号
+                return ssid;
+            }
         }
         return null;
     }
@@ -60,6 +63,7 @@ public class MonitorcameraWifiManager {
         }
 
         String currSsid = getConnectedWifiSsid();
+        Util.e("-------->currSsid = " + currSsid);
         if (currSsid != null && currSsid.equals(Constant.WIFI_SSID)) {
             return true;
         }
@@ -68,6 +72,7 @@ public class MonitorcameraWifiManager {
                 Constant.WIFI_PASSWORDS);
         int wcgID = mWifiManager.addNetwork(wifiInfo);
         boolean b = mWifiManager.enableNetwork(wcgID, true);
+        Util.e("-------->b = " + b);
         return b;
     }
 

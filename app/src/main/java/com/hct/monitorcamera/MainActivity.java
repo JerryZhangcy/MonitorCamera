@@ -25,6 +25,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.hct.monitorcamera.File.FileInfo;
+import com.hct.monitorcamera.File.FileSave;
 import com.hct.monitorcamera.File.FileUtil;
 import com.hct.monitorcamera.callback.OnSocketConnectListener;
 import com.hct.monitorcamera.connect.ConnectManager;
@@ -51,6 +53,7 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
 
     private static final int PERMISSIONS_REQUEST = 1;
     private boolean mIsWifiConnected = false;
+    private NetworkInfo.DetailedState mLastState = NetworkInfo.DetailedState.IDLE;
 
     private WifiConnectChangedReceiver mWifiConnectChangedReceiver = new WifiConnectChangedReceiver();
 
@@ -82,23 +85,51 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
                     mFileListAdapter.updateAdapter(FileUtil.getInstance().getPictureNameList());
                     break;
                 case UPDATE_WIFI_STATE:
-                    boolean flag = (boolean) msg.obj;
-                    if (flag) {
-                        if (ConnectManager.getInstance().getConnectState()
-                                == ConnectManager.CURRENT_CONNECTED) {
-                            mConnectWifi.setText(R.string.wifi_connect_success);
+                    NetworkInfo.DetailedState currentdState = (NetworkInfo.DetailedState) msg.obj;
+                    switch (currentdState) {
+                        case CONNECTED:
+                            if (msg.arg1 == 1) {
+                                if (ConnectManager.getInstance().getConnectState()
+                                        == ConnectManager.CURRENT_CONNECTED) {
+                                    mConnectWifi.setText(R.string.wifi_connect_success);
+                                    mConnectWifi.setEnabled(false);
+                                    mConnectDevice.setEnabled(false);
+                                } else {
+                                    mConnectWifi.setText(R.string.wifi_connect_success);
+                                    mConnectWifi.setEnabled(false);
+                                    mConnectDevice.setEnabled(true);
+                                }
+                            } else {
+                                mConnectWifi.setText(R.string.connect_wifi);
+                                mConnectWifi.setEnabled(true);
+                                mConnectDevice.setEnabled(false);
+                                mDisConnectDevice.setEnabled(false);
+                            }
+                            break;
+                        case DISCONNECTED:
+                            mConnectWifi.setText(R.string.connect_wifi);
+                            mConnectWifi.setEnabled(true);
+                            mConnectDevice.setEnabled(false);
+                            mDisConnectDevice.setEnabled(false);
+                            break;
+                        case OBTAINING_IPADDR:
+                            mConnectWifi.setText(R.string.Wifi_OBTAINING_IPADDR);
                             mConnectWifi.setEnabled(false);
                             mConnectDevice.setEnabled(false);
-                        } else {
-                            mConnectWifi.setText(R.string.wifi_connect_success);
+                            mDisConnectDevice.setEnabled(false);
+                            break;
+                        case CONNECTING:
+                            mConnectWifi.setText(R.string.Wifi_AUTHENTICATING);
                             mConnectWifi.setEnabled(false);
-                            mConnectDevice.setEnabled(true);
-                        }
-                    } else {
-                        mConnectWifi.setText(R.string.connect_wifi);
-                        mConnectWifi.setEnabled(true);
-                        mConnectDevice.setEnabled(false);
-                        mDisConnectDevice.setEnabled(false);
+                            mConnectDevice.setEnabled(false);
+                            mDisConnectDevice.setEnabled(false);
+                            break;
+                        case AUTHENTICATING:
+                            mConnectWifi.setText(R.string.Wifi_AUTHENTICATING);
+                            mConnectWifi.setEnabled(false);
+                            mConnectDevice.setEnabled(false);
+                            mDisConnectDevice.setEnabled(false);
+                            break;
                     }
                     break;
                 case UPDATE_RECV_TIME_MSG:
@@ -143,6 +174,7 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
     protected void onDestroy() {
         super.onDestroy();
         ConnectManager.getInstance().disconnect();
+        FileSave.getInstance().stopThread();
     }
 
     private boolean checkPermissions(Context context, String[] permissions) {
@@ -212,6 +244,8 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
         connectManager.setLocationSocketConnectListener(this);
 
         mFileListAdapter = new FileListAdapter(this);
+
+        FileSave.getInstance().startThread();
     }
 
     @Override
@@ -219,6 +253,7 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
         switch (v.getId()) {
             case R.id.connect_wifi:
                 MonitorcameraWifiManager.getInstance().startConnectWifi();
+                mConnectWifi.setEnabled(false);
                 break;
             case R.id.connect_device:
                 InetSocketAddress inetSocketAddress
@@ -269,7 +304,7 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
         String tag = msg.getTag();
         if (TransferProtocol.FILE_LIST.equals(tag)) {
             String[] listValue = msg.message.split(TransferProtocol.DELIMITER_DIV);
-            for(String item:listValue) {
+            for (String item : listValue) {
                 FileUtil.getInstance().addPictureNameList(item);
             }
             mHander.obtainMessage(UPDATE_RECV_FILElIST_MSG).sendToTarget();
@@ -282,15 +317,10 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
             if (TransferProtocol.ERROR.equals(msg.message)) {
                 return;
             }
-            WorkThreadManager.executeOnSubThread(new Runnable() {
-                @Override
-                public void run() {
-                    byte[] data = Util.toBytes(msg.message);
-                    String fileName = FileUtil.getInstance().
-                            getPictureNameAtPostion(FileUtil.mCurrentPictureNum);
-                    FileUtil.getInstance().savePicture(data, fileName);
-                }
-            });
+            byte[] data = Util.toBytes(msg.message);
+            String fileName = FileUtil.getInstance().
+                    getPictureNameAtPostion(FileUtil.mCurrentPictureNum);
+            FileSave.getInstance().addFileToQueue(new FileInfo(data, fileName));
             FileUtil.mCurrentPictureNum++;
         }
     }
@@ -315,21 +345,36 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
                 Parcelable parcelableExtra = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
                 if (parcelableExtra != null) {
                     NetworkInfo networkInfo = (NetworkInfo) parcelableExtra;
-                    NetworkInfo.State state = networkInfo.getState();
-                    Util.d("--------state = " + state);
-                    Message message = new Message();
-                    message.what = UPDATE_WIFI_STATE;
-                    if (state == NetworkInfo.State.CONNECTED) {
-                        if (Constant.WIFI_SSID
-                                .equals(MonitorcameraWifiManager.getInstance().getConnectedWifiSsid())) {
-                            message.obj = true;
-                        } else {
-                            message.obj = false;
+                    NetworkInfo.DetailedState currentdState = networkInfo.getDetailedState();
+                    Util.d("--------state = " + currentdState);
+                    if (mLastState != currentdState) {
+                        Message message = new Message();
+                        message.what = UPDATE_WIFI_STATE;
+                        switch (currentdState) {
+                            case CONNECTED:
+                                message.obj = NetworkInfo.DetailedState.CONNECTED;
+                                if (Constant.WIFI_SSID
+                                        .equals(MonitorcameraWifiManager.getInstance().getConnectedWifiSsid())) {
+                                    message.arg1 = 1;
+                                } else {
+                                    message.arg1 = 0;
+                                }
+                                break;
+                            case DISCONNECTED:
+                                message.obj = NetworkInfo.DetailedState.DISCONNECTED;
+                                break;
+                            case OBTAINING_IPADDR:
+                                message.obj = NetworkInfo.DetailedState.OBTAINING_IPADDR;
+                                break;
+                            case CONNECTING:
+                                message.obj = NetworkInfo.DetailedState.CONNECTING;
+                                break;
+                            case AUTHENTICATING:
+                                message.obj = NetworkInfo.DetailedState.AUTHENTICATING;
+                                break;
                         }
-                    } else {
-                        message.obj = false;
+                        mHander.sendMessage(message);
                     }
-                    mHander.sendMessage(message);
                 }
             }
         }

@@ -105,7 +105,7 @@ public class FileUtil {
         try {
             out = new FileOutputStream(mImageFilePath);
             Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-            bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            bmp.compress(Bitmap.CompressFormat.JPEG, 80, out);
             out.flush();
         } catch (Exception e) {
             e.printStackTrace();
