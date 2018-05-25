@@ -7,10 +7,15 @@ import android.os.Environment;
 import android.os.StatFs;
 import android.text.TextUtils;
 
+import com.hct.monitorcamera.Util;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 
 public class FileUtil {
@@ -93,6 +98,7 @@ public class FileUtil {
     }
 
     public void savePicture(byte[] data, String pictureName) {
+        Util.e("savePicture---------> pictureName = " + pictureName);
         if (TextUtils.isEmpty(pictureName) || data == null) {
             return;
         }
@@ -116,6 +122,52 @@ public class FileUtil {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+        }
+    }
+
+    public  void writeCaching(String data) {
+
+        Writer writer = null;
+        FileOutputStream fos = null;
+        File file = new File(INTERNAL_PATH + File.separator + MONITOR_CAMERA_ROOT_DIR);
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        File inputFile = new File(INTERNAL_PATH + File.separator + MONITOR_CAMERA_ROOT_DIR,
+                "test.txt");
+        if (!inputFile.exists()) {
+            try {
+                inputFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+        }
+        inputFile.setWritable(true);
+        inputFile.setReadable(true);
+
+        try {
+            fos = new FileOutputStream(inputFile, true);
+            writer = new OutputStreamWriter(fos);
+            writer.write(data + "\n");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (writer != null)
+                    writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                if (fos != null)
+                    fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

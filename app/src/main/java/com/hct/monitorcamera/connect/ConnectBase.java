@@ -288,10 +288,9 @@ public abstract class ConnectBase {
             return;
         }
         content = content.substring(0, bytesRead);
-        content = content.replaceAll("\\s*", "");
         int contentLenght = content.length();
         Util.d("dispatchMessage--------->content = " + content);
-        if (TransferProtocol.FILE_LIST.contains(content)) {
+        if (content.contains(TransferProtocol.FILE_LIST)) {
             mTag = TransferProtocol.FILE_LIST;
             int tagLength = mTag.length();
             if (contentLenght > tagLength) {
@@ -299,7 +298,7 @@ public abstract class ConnectBase {
             } else {
                 content = "";
             }
-        } else if (TransferProtocol.TIME.contains(content)) {
+        } else if (content.contains(TransferProtocol.TIME)) {
             mTag = TransferProtocol.TIME;
             int tagLength = mTag.length();
             if (contentLenght > tagLength) {
@@ -307,7 +306,7 @@ public abstract class ConnectBase {
             } else {
                 content = "";
             }
-        } else if (TransferProtocol.PICTURE.contains(content)) {
+        } else if (content.contains(TransferProtocol.PICTURE)) {
             mTag = TransferProtocol.PICTURE;
             int tagLength = mTag.length();
             if (contentLenght > tagLength) {

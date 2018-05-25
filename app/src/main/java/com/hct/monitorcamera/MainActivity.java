@@ -86,50 +86,52 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
                     break;
                 case UPDATE_WIFI_STATE:
                     NetworkInfo.DetailedState currentdState = (NetworkInfo.DetailedState) msg.obj;
-                    switch (currentdState) {
-                        case CONNECTED:
-                            if (msg.arg1 == 1) {
-                                if (ConnectManager.getInstance().getConnectState()
-                                        == ConnectManager.CURRENT_CONNECTED) {
-                                    mConnectWifi.setText(R.string.wifi_connect_success);
-                                    mConnectWifi.setEnabled(false);
-                                    mConnectDevice.setEnabled(false);
+                    if (currentdState != null) {
+                        switch (currentdState) {
+                            case CONNECTED:
+                                if (msg.arg1 == 1) {
+                                    if (ConnectManager.getInstance().getConnectState()
+                                            == ConnectManager.CURRENT_CONNECTED) {
+                                        mConnectWifi.setText(R.string.wifi_connect_success);
+                                        mConnectWifi.setEnabled(false);
+                                        mConnectDevice.setEnabled(false);
+                                    } else {
+                                        mConnectWifi.setText(R.string.wifi_connect_success);
+                                        mConnectWifi.setEnabled(false);
+                                        mConnectDevice.setEnabled(true);
+                                    }
                                 } else {
-                                    mConnectWifi.setText(R.string.wifi_connect_success);
-                                    mConnectWifi.setEnabled(false);
-                                    mConnectDevice.setEnabled(true);
+                                    mConnectWifi.setText(R.string.connect_wifi);
+                                    mConnectWifi.setEnabled(true);
+                                    mConnectDevice.setEnabled(false);
+                                    mDisConnectDevice.setEnabled(false);
                                 }
-                            } else {
+                                break;
+                            case DISCONNECTED:
                                 mConnectWifi.setText(R.string.connect_wifi);
                                 mConnectWifi.setEnabled(true);
                                 mConnectDevice.setEnabled(false);
                                 mDisConnectDevice.setEnabled(false);
-                            }
-                            break;
-                        case DISCONNECTED:
-                            mConnectWifi.setText(R.string.connect_wifi);
-                            mConnectWifi.setEnabled(true);
-                            mConnectDevice.setEnabled(false);
-                            mDisConnectDevice.setEnabled(false);
-                            break;
-                        case OBTAINING_IPADDR:
-                            mConnectWifi.setText(R.string.Wifi_OBTAINING_IPADDR);
-                            mConnectWifi.setEnabled(false);
-                            mConnectDevice.setEnabled(false);
-                            mDisConnectDevice.setEnabled(false);
-                            break;
-                        case CONNECTING:
-                            mConnectWifi.setText(R.string.Wifi_AUTHENTICATING);
-                            mConnectWifi.setEnabled(false);
-                            mConnectDevice.setEnabled(false);
-                            mDisConnectDevice.setEnabled(false);
-                            break;
-                        case AUTHENTICATING:
-                            mConnectWifi.setText(R.string.Wifi_AUTHENTICATING);
-                            mConnectWifi.setEnabled(false);
-                            mConnectDevice.setEnabled(false);
-                            mDisConnectDevice.setEnabled(false);
-                            break;
+                                break;
+                            case OBTAINING_IPADDR:
+                                mConnectWifi.setText(R.string.Wifi_OBTAINING_IPADDR);
+                                mConnectWifi.setEnabled(false);
+                                mConnectDevice.setEnabled(false);
+                                mDisConnectDevice.setEnabled(false);
+                                break;
+                            case CONNECTING:
+                                mConnectWifi.setText(R.string.Wifi_AUTHENTICATING);
+                                mConnectWifi.setEnabled(false);
+                                mConnectDevice.setEnabled(false);
+                                mDisConnectDevice.setEnabled(false);
+                                break;
+                            case AUTHENTICATING:
+                                mConnectWifi.setText(R.string.Wifi_AUTHENTICATING);
+                                mConnectWifi.setEnabled(false);
+                                mConnectDevice.setEnabled(false);
+                                mDisConnectDevice.setEnabled(false);
+                                break;
+                        }
                     }
                     break;
                 case UPDATE_RECV_TIME_MSG:
@@ -317,9 +319,12 @@ public class MainActivity extends Activity implements View.OnClickListener, OnSo
             if (TransferProtocol.ERROR.equals(msg.message)) {
                 return;
             }
+
+            FileUtil.getInstance().writeCaching(msg.message);
+
             byte[] data = Util.toBytes(msg.message);
-            String fileName = FileUtil.getInstance().
-                    getPictureNameAtPostion(FileUtil.mCurrentPictureNum);
+            String fileName = "20180525.jpg";//FileUtil.getInstance().
+            //getPictureNameAtPostion(FileUtil.mCurrentPictureNum);
             FileSave.getInstance().addFileToQueue(new FileInfo(data, fileName));
             FileUtil.mCurrentPictureNum++;
         }
